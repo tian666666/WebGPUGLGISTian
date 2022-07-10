@@ -1,7 +1,7 @@
 /*
  * @Author: TYW
  * @Date: 2022-06-20 23:09:15
- * @LastEditTime: 2022-06-23 23:49:27
+ * @LastEditTime: 2022-06-23 23:31:33
  * @LastEditors: TYW
  * @Description:
  */
@@ -15,7 +15,7 @@ const vertexString = `
 attribute vec4 a_position;
 uniform mat4 proj;
 void main(void) {
-  gl_Position = a_position;
+  gl_Position = proj * a_position;
   gl_PointSize = 60.0;
 }
 `;
@@ -60,10 +60,16 @@ function initShader() {
 }
 
 function initBuffer() {
+  const arrIndex = [
+    0, 1, 2,
+    0, 3, 4
+  ]
   const pointsArr = [
-    0, 0.5, 0, 1.0, 0.25, 0.15, 0, 1.0, 0.5,0,0,1.0,0.25, -0.15, 0, 1.0, 0.35, -0.67, 0,
-    1.0, 0, -0.3, 0, 1.0, -0.35, -0.67, 0, 1.0, -0.25, -0.15, 0, 1.0, -0.5, 0,
-    0, 1.0, -0.25, 0.15, 0, 1.0
+    100.0, 100.0, 0, 1.0, 
+    200.0, 200.0, 0, 1.0, 
+    300.0, 200.0, 0, 1.0, 
+    400.0, 600.0, 0, 1.0,
+    500.0, 700.0, 0, 1.0
   ];
   const pointPosition = new Float32Array(pointsArr);
   const aPosition = webgl?.getAttribLocation(
@@ -76,6 +82,10 @@ function initBuffer() {
   webgl?.enableVertexAttribArray(aPosition);
   webgl?.vertexAttribPointer(aPosition, 4, webgl.FLOAT, false, 4 * 4, 0 * 4);
 
+  const indexArr = new Uint16Array(arrIndex);
+  const indexBuffer = webgl?.createBuffer() as WebGLBuffer;
+  webgl?.bindBuffer(webgl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+  webgl?.bufferData(webgl.ELEMENT_ARRAY_BUFFER, indexArr, webgl.STATIC_DRAW);
   const uniforproj = webgl?.getUniformLocation(
     program as WebGLProgram,
     'proj'
@@ -91,7 +101,8 @@ function draw() {
   //  webgl?.drawArrays(webgl.LINE_LOOP, 0, 4);
   // webgl?.drawArrays(webgl.TRIANGLES, 0, 4);
   // webgl?.drawArrays(webgl.TRIANGLE_STRIP, 0, 4);
-  webgl?.drawArrays(webgl.LINE_LOOP, 0, 10);
+  // webgl?.drawArrays(webgl.TRIANGLE_FAN, 0, 4);
+  webgl?.drawElements(webgl.TRIANGLES, 6, webgl.UNSIGNED_SHORT, 0);
 }
 
 run();

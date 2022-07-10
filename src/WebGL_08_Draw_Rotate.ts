@@ -1,7 +1,7 @@
 /*
  * @Author: TYW
  * @Date: 2022-06-20 23:09:15
- * @LastEditTime: 2022-06-23 23:49:27
+ * @LastEditTime: 2022-06-23 23:31:33
  * @LastEditors: TYW
  * @Description:
  */
@@ -14,8 +14,9 @@ const projMat4 = mat4.create();
 const vertexString = `
 attribute vec4 a_position;
 uniform mat4 proj;
+uniform float angle;
 void main(void) {
-  gl_Position = a_position;
+  gl_Position =  vec4((proj * a_position).x * cos(angle) - (proj * a_position).y * sin(angle), (proj * a_position).x * sin(angle) + (proj * a_position).y * cos(angle), (proj * a_position).z, (proj * a_position).w);
   gl_PointSize = 60.0;
 }
 `;
@@ -24,6 +25,8 @@ void main() {
   gl_FragColor =  vec4(0,0,1.0,1.0);
 }
 `;
+
+// gl_Position =  proj * vec4(a_position.x * cos(angle) - a_position.y * sin(angle), a_position.x * sin(angle) + a_position.y * cos(angle), a_position.z, a_position.w);
 function run() {
   initWebgl();
   initShader();
@@ -60,11 +63,19 @@ function initShader() {
 }
 
 function initBuffer() {
+  const arrIndex = [
+    0, 1, 2
+  ]
   const pointsArr = [
-    0, 0.5, 0, 1.0, 0.25, 0.15, 0, 1.0, 0.5,0,0,1.0,0.25, -0.15, 0, 1.0, 0.35, -0.67, 0,
-    1.0, 0, -0.3, 0, 1.0, -0.35, -0.67, 0, 1.0, -0.25, -0.15, 0, 1.0, -0.5, 0,
-    0, 1.0, -0.25, 0.15, 0, 1.0
-  ];
+    100.0, 100.0, 0, 1.0,
+    200.0, 200.0, 0, 1.0,
+    300.0, 200.0, 0, 1.0,
+  ]
+  // const pointsArr = [
+  //   0.1, 0.4, 0, 1.0,
+  //   0.1, 0.5, 0, 1.0,
+  //   0.2, 0.4, 0, 1.0
+  // ];
   const pointPosition = new Float32Array(pointsArr);
   const aPosition = webgl?.getAttribLocation(
     program as WebGLProgram,
@@ -73,14 +84,31 @@ function initBuffer() {
   const lineBuffer = webgl?.createBuffer();
   webgl?.bindBuffer(webgl.ARRAY_BUFFER, lineBuffer as WebGLBuffer);
   webgl?.bufferData(webgl.ARRAY_BUFFER, pointPosition, webgl.STATIC_DRAW);
+
+  webgl?.vertexAttribPointer(aPosition, 4, webgl.FLOAT, false, 0, 0 * 4);
+
   webgl?.enableVertexAttribArray(aPosition);
-  webgl?.vertexAttribPointer(aPosition, 4, webgl.FLOAT, false, 4 * 4, 0 * 4);
+
+  const indexArr = new Uint16Array(arrIndex);
+  const indexBuffer = webgl?.createBuffer() as WebGLBuffer;
+  webgl?.bindBuffer(webgl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+  webgl?.bufferData(webgl.ELEMENT_ARRAY_BUFFER, indexArr, webgl.STATIC_DRAW);
+
+
 
   const uniforproj = webgl?.getUniformLocation(
     program as WebGLProgram,
     'proj'
   ) as WebGLUniformLocation;
   webgl?.uniformMatrix4fv(uniforproj, false, projMat4);
+
+  // 赋值 ---  shader 中的变量 真实赋值
+  const uAngle = webgl?.getUniformLocation(program as WebGLProgram, "angle") as WebGLUniformLocation;
+  // 弧度  设置弧度 用以旋转图形---更改弧度可测试
+  const angle1 = 180 * Math.PI / 180;
+  webgl?.uniform1f(uAngle, angle1);
+
+
 }
 
 function draw() {
@@ -91,7 +119,8 @@ function draw() {
   //  webgl?.drawArrays(webgl.LINE_LOOP, 0, 4);
   // webgl?.drawArrays(webgl.TRIANGLES, 0, 4);
   // webgl?.drawArrays(webgl.TRIANGLE_STRIP, 0, 4);
-  webgl?.drawArrays(webgl.LINE_LOOP, 0, 10);
+  // webgl?.drawArrays(webgl.TRIANGLE_FAN, 0, 4);
+  webgl?.drawElements(webgl.TRIANGLES, 3, webgl.UNSIGNED_SHORT, 0);
 }
 
 run();
